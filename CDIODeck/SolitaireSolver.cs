@@ -31,7 +31,7 @@ namespace Deck
         {
             cardLogik = new CardLogik();
 
-            moves = new Object[2].Select(i => new List<CardModel>()).ToArray();
+            moves = new List<CardModel>[2];
             first = new List<string>();
             second = new List<string>();
             score = new List<int>();
