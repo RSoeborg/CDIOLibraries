@@ -137,7 +137,7 @@ namespace Deck
 
         void FindAllMoves(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
         {
-            // Deck to Stacks
+            // Deck to Stack
             if (deck != null)
             {
                 for (int i = stacks.Length - 1; i >= 0; i--)
