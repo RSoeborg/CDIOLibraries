@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Xml.Linq;
 using Deck;
 
 namespace Deck
@@ -21,37 +22,66 @@ namespace Deck
         CardLogik cardLogik;
 
         List<CardModel>[] moves { get; set; }
-        List<string> first { get; set; }
-        List<string> second { get; set; }
         List<int> score { get; set; }
-        List<string> downCard { get; set; }
-        List<string> deckCard { get; set; }
+        List<int> downCard { get; set; }
+        List<CardModel> deckCard { get; set; }
 
         void SolitaireSolverSetup()
         {
             cardLogik = new CardLogik();
 
             moves = new List<CardModel>[2];
-            first = new List<string>();
-            second = new List<string>();
             score = new List<int>();
-            downCard = new List<string>();
-            deckCard = new List<string>();
+            downCard = new List<int>();
+            deckCard = new List<CardModel>();
         }
 
         /// <summary>
         /// Returns the best Move the player can make
         /// </summary>
-        /// <param name="deckCard">The card from the deck</param>
+        /// <param name="deck">The card from the deck</param>
         /// <param name="colorStacks">the ace stack list</param>
         /// <param name="stacks">The board stack list</param>
-        public CardModel GetBestMove(CardModel deckCard, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        public List<CardModel> GetBestMove(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
         {
             SolitaireSolverSetup();
 
+            MovingAcesAndDeuces(deck, colorStacks, stacks);
 
+            if (!moves.Any())
+            {
+                FindAllMoves(deck, colorStacks, stacks);
 
-            return null;
+                foreach (CardModel move in moves[0]) score.Add(0);
+
+                DownCardScore();
+
+                KingMovement(deck, stacks);
+
+                BuildAceStack(deck, colorStacks, stacks);
+            }
+            else foreach (CardModel move in moves[0]) score.Add(0);
+
+            List<CardModel> temp = new List<CardModel>();
+
+            if (!moves.Any())
+            {
+                temp.Add(new CardModel("New Deck Card"));
+                temp.Add(new CardModel("New Deck Card"));
+            }
+            else
+            {
+                for (int i = 0; i > moves.Length; i++)
+                {
+                    if (score[i] == score.Max())
+                    {
+                        temp.Add(moves[0][i]);
+                        temp.Add(moves[1][i]);
+                    }
+                }
+            }
+
+            return temp;
         }
 
         /// <summary>
@@ -59,10 +89,10 @@ namespace Deck
         /// 
         /// Always play an Ace or Deuce wherever you can immediately.
         /// </summary>
-        /// <param name="deckCard">The card from the deck</param>
+        /// <param name="deck">The card from the deck</param>
         /// <param name="colorStacks">The ace stack list</param>
         /// <param name="stacks">the board stack list</param>
-        void MovingAcesAndDeuces(CardModel deckCard, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        void MovingAcesAndDeuces(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
         {
             CardModel ace = cardLogik.GetSpecificCardFromStack(stacks, new CardModel("_A"));
             CardModel deuce = cardLogik.GetSpecificCardFromStack(stacks, new CardModel("_2"));
@@ -78,10 +108,10 @@ namespace Deck
             }
 
             // From the deck
-            if (cardLogik.GetValueFromCardModel(deckCard) == 1)
+            if (cardLogik.GetValueFromCardModel(deck) == 1)
             {
-                moves[0].Add(deckCard);
-                string deckSuit = cardLogik.GetSuitFromCardModel(deckCard);
+                moves[0].Add(deck);
+                string deckSuit = cardLogik.GetSuitFromCardModel(deck);
                 moves[1].Add(deckSuit.Equals("h") ? new CardModel("1") : deckSuit.Equals("d") ? new CardModel("2") : deckSuit.Equals("c") ? new CardModel("3") : new CardModel("4"));
             }
             #endregion
@@ -96,13 +126,178 @@ namespace Deck
             }
 
             // From the deck
-            if (cardLogik.GetValueFromCardModel(deckCard) == 2 && cardLogik.IsAceStackEmpty(deuce, colorStacks))
+            if (cardLogik.GetValueFromCardModel(deck) == 2 && cardLogik.IsAceStackEmpty(deuce, colorStacks))
             {
-                moves[0].Add(deckCard);
-                string deckSuit = cardLogik.GetSuitFromCardModel(deckCard);
+                moves[0].Add(deck);
+                string deckSuit = cardLogik.GetSuitFromCardModel(deck);
                 moves[1].Add(deckSuit.Equals("h") ? colorStacks[0].Last() : deckSuit.Equals("d") ? colorStacks[1].Last() : deckSuit.Equals("c") ? colorStacks[2].Last() : colorStacks[3].Last());
             }
             #endregion
+        }
+
+        void FindAllMoves(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        {
+            // Deck to Stacks
+            if (deck != null)
+            {
+                for (int i = stacks.Length - 1; i >= 0; i--)
+                {
+                    if (stacks[i].Count != 0)
+                    {
+                        if (cardLogik.CanColorStack(deck, stacks[i].Last()) && cardLogik.CanNumberStack(deck, stacks[i].Last()))
+                        {
+                            moves[0].Add(deck);
+                            moves[1].Add(stacks[i].Last());
+
+                            downCard.Add(0);
+                            deckCard.Add(stacks[i].Last());
+                        }
+                    }
+                    else if (cardLogik.GetValueFromCardModel(deck) == 13)
+                    {
+                        moves[0].Add(deck);
+                        moves[1].Add(new CardModel("Empty"));
+
+                        downCard.Add(0);
+                        deckCard.Add(new CardModel("Empty"));
+                    }
+                }
+            }
+
+            // Stack to stack
+            for (int i = stacks.Length - 1; i >= 0; i--)
+            {
+                if (stacks[i].Count != 0)
+                {
+                    int n = stacks[i].Count - 1;
+                    if (n > 0)
+                    {
+                        while (stacks[i][n - 1].Uncovered)
+                        {
+                            n--;
+                            if (n == 0) break;
+                        }
+                    }
+
+                    for (int s = stacks.Length - 1; i >= 0; i--)
+                    {
+                        if (stacks[s].Count != 0)
+                        {
+                            if (cardLogik.CanColorStack(stacks[i][n], stacks[s].Last()) && cardLogik.CanNumberStack(stacks[i][n], stacks[s].Last()))
+                            {
+                                moves[0].Add(stacks[i][n]);
+                                moves[1].Add(stacks[s].Last());
+
+                                downCard.Add(n);
+                                deckCard.Add(new CardModel(""));
+                            }
+                        }
+                        else if (cardLogik.GetValueFromCardModel(stacks[i][n]) == 13 && n != 0)
+                        {
+                            moves[0].Add(stacks[i][n]);
+                            moves[1].Add(stacks[s].Last());
+
+                            downCard.Add(n);
+                            deckCard.Add(new CardModel(""));
+                        }
+                    }
+                }
+            }
+        }
+
+        void DownCardScore()
+        {
+            for (int i = 0; i < downCard.Count; i++)
+            {
+                score[i] += downCard[i];
+            }
+        }
+
+        void KingMovement(CardModel deck, List<CardModel>[] stacks)
+        {
+            if (moves[0].Count == 1 && !deckCard.Any() && downCard[0] == 0)
+            {
+                int coveredCards = 0;
+
+                bool kingOnTable = false;
+                bool kingInDeck = false;
+
+                if (cardLogik.GetValueFromCardModel(deck) == 13)
+                {
+                    kingInDeck = true;
+                }
+
+                foreach(List<CardModel> stack in stacks)
+                {
+                    int n = stack.Count - 1;
+                    if (n > 0)
+                    {
+                        while (stack[n - 1].Uncovered)
+                        {
+                            n--;
+                            if (n == 0) break;
+                        }
+                    }
+
+                    coveredCards += n;
+
+                    if (stack.Count > 1 && cardLogik.GetValueFromCardModel(stack[n]) == 13)
+                    {
+                        kingOnTable = true;
+                    }
+
+                    if (stack.Count != 0 && kingInDeck)
+                    {
+                        if (cardLogik.CanColorStack(stack[n], deck) && cardLogik.CanNumberStack(stack[n], deck)) kingInDeck = true;
+                        else kingInDeck = false;
+                    }
+                }
+
+                if (!kingOnTable && !kingInDeck && coveredCards > 0)
+                {
+                    moves[0].Clear();
+                    moves[1].Clear();
+
+                    score.Clear();
+                    downCard.Clear();
+                    deckCard.Clear();
+                }
+            }
+        }
+
+        void BuildAceStack(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        {
+            if (moves.Any()) return;
+
+            // stacks to Color Stacks
+            int n = 0;
+            foreach(List<CardModel> stack in stacks)
+            {
+                string stackCardSuit = cardLogik.GetSuitFromCardModel(stack.Last());
+                int stackCardIndex = stackCardSuit.Equals("h") ? 0 : stackCardSuit.Equals("d") ? 1 : stackCardSuit.Equals("c") ? 2 : 3;
+
+                if (colorStacks[stackCardIndex].Any() && cardLogik.CanNumberStack(colorStacks[stackCardIndex].Last(), stack.Last()))
+                {
+                    moves[0].Add(stack.Last());
+                    moves[1].Add(colorStacks[stackCardIndex].Last());
+
+                    score.Add(1);
+                }
+
+                n++;
+            }
+
+            // Deck to Color Stacks
+            string deckCardSuit = cardLogik.GetSuitFromCardModel(deck);
+            int deckCardIndex = deckCardSuit.Equals("h") ? 0 : deckCardSuit.Equals("d") ? 1 : deckCardSuit.Equals("c") ? 2 : 3;
+
+            if (colorStacks[deckCardIndex].Any() && cardLogik.CanNumberStack(colorStacks[deckCardIndex].Last(), deck))
+            {
+                moves[0].Add(deck);
+                moves[1].Add(colorStacks[deckCardIndex].Last());
+
+                score.Add(1);
+            }
         }
     }
 
@@ -121,16 +316,6 @@ namespace Deck
         /// Converts CardType from CardModel into an int Value
         /// </summary>
         /// <param name="cardModel">The card</param>
-        /*public int GetValueFromCardModel(CardModel cardModel) => cardModel switch
-        {
-            _ when GetStringArrayFromCardModel(cardModel)[1].Equals("A") => 1,
-            _ when GetStringArrayFromCardModel(cardModel)[1].Equals("K") => 13,
-            _ when GetStringArrayFromCardModel(cardModel)[1].Equals("Q") => 12,
-            _ when GetStringArrayFromCardModel(cardModel)[1].Equals("J") => 11,
-            _ when GetStringArrayFromCardModel(cardModel).Count() == 3 => int.Parse(GetStringArrayFromCardModel(cardModel)[1]),
-            _ when GetStringArrayFromCardModel(cardModel).Count() == 4 => int.Parse(GetStringArrayFromCardModel(cardModel)[1] + GetStringArrayFromCardModel(cardModel)[2]),
-            _ => throw new Exception("Error in getting correct value")
-        };*/
         public int GetValueFromCardModel(CardModel cardModel)
         {
             string[] args = GetStringArrayFromCardModel(cardModel);
@@ -199,22 +384,6 @@ namespace Deck
         /// <param name="cardBottom">The card that another card will go on top of</param>
         public bool CanNumberStack(CardModel cardTop, CardModel cardBottom) =>
             GetValueFromCardModel(cardTop) == GetValueFromCardModel(cardBottom) - 1;
-
-        /// <summary>
-        /// It's the same as CanNumberStack, but is used for checking if the number can stack when looking for moves into the Ace Stacks
-        /// </summary>
-        /// <param name="cardTop">The card that will go on top</param>
-        /// <param name="cardBottom">The card that another card will go on top of</param>
-        public bool CanNumberColorStack(CardModel cardTop, CardModel cardBottom) =>
-            GetValueFromCardModel(cardTop) - 1 == GetValueFromCardModel(cardTop);
-
-        /// <summary>
-        /// Making sure that you can only stack the same colors in the Ace Stacks
-        /// </summary>
-        /// <param name="cardTop">The card that will go on top</param>
-        /// <param name="cardBottom">The card that another card will go on top of</param>
-        public bool IsSameColor(CardModel cardTop, CardModel cardBottom) =>
-            GetSuitFromCardModel(cardTop).Equals(GetSuitFromCardModel(cardBottom));
 
         public CardModel GetSpecificCardFromStack(List<CardModel>[] stacks, CardModel cardValue)
         {
