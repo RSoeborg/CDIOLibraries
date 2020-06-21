@@ -7,8 +7,10 @@
 ===============================
 */
 
+using ComputerVision;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,11 +19,71 @@ namespace Deck
 {
     public class BoardController
     {
-        private BoardModel Board = new BoardModel();
+        private readonly object mutex = new object();
 
-        public void AddObservedCard(CardModel Card) 
+        private BoardModel Board = new BoardModel();
+        private CvCardTransformer Transformer;
+
+        private const int ConsistencyBuffer = 50;
+        private const int ConsistencyUpdatesPerCheck = 15;
+        private const int MinConsistencyRequired = 1;
+        private bool BufferFull = false;
+
+        private int CurrentDeterminedBoardModelIndex = 0;
+        private BoardModel[] LastDeterminedBoardModels = new BoardModel[ConsistencyBuffer]; // We save the last 10 determined board models to ensure that the data is consistent.
+
+        public BoardModel GetBoard() 
         {
-            throw new NotImplementedException();
+            lock (mutex)
+            {
+                return Board;
+            }
+        }
+
+        public BoardController()
+        {
+            Transformer = new CvCardTransformer();
+        }
+
+        public CardModel[] Transformed => Transformer.GetTransformedObservations();
+
+        public void UpdateBoardWithObservations(CvModel[] Observations)
+        {
+            lock (mutex)
+            {
+                Console.WriteLine($"Level: {CurrentDeterminedBoardModelIndex}");
+                
+                Transformer.GetBoardState(Observations);
+                LastDeterminedBoardModels[CurrentDeterminedBoardModelIndex++] = Transformer.GetBoardState(Observations); 
+                if (CurrentDeterminedBoardModelIndex > ConsistencyBuffer - 1) 
+                {
+                    BufferFull = true;
+                    CurrentDeterminedBoardModelIndex = 0;
+                }
+
+                if (CurrentDeterminedBoardModelIndex % ConsistencyUpdatesPerCheck == 0 && BufferFull)
+                {
+                    // Check for most agreed consistent data
+                    var dict = new Dictionary<BoardModel, int>();
+
+                    foreach (var value in LastDeterminedBoardModels)
+                    {
+                        if (dict.ContainsKey(value))
+                            dict[value]++;
+                        else
+                            dict[value] = 1;
+                    }
+
+                    KeyValuePair<BoardModel, int> MostOccuredModel = new KeyValuePair<BoardModel, int>(new BoardModel(), 0);
+                    foreach (var pair in dict)
+                        if (pair.Key.CardsOnBoard() >= MostOccuredModel.Key.CardsOnBoard())
+                            if (pair.Value > MostOccuredModel.Value && pair.Value > MinConsistencyRequired)
+                                MostOccuredModel = pair;
+
+                    Board = MostOccuredModel.Key;
+                }
+
+            }
         }
 
 

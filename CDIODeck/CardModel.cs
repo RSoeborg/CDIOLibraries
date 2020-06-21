@@ -22,15 +22,27 @@ namespace Deck
     {
         public CardType Type { get; set; }
 
-        public Rectangle WorldLocation { get; set; }
-        
+        public Point MinWorldPoint { get; set; }
+        public Point MaxWorldPoint { get; set; }
+
         public bool Uncovered { get; set; }
 
         public CardModel() { }
 
         public CardModel(string ModelType)
         {
-            Type = (CardType)Enum.Parse(typeof(CardType), ModelType.Substring(1, ModelType.Length - 1));
+            Type = (CardType)Enum.Parse(typeof(CardType), ModelType);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is CardModel model &&
+                   Type == model.Type;
+        }
+
+        public override int GetHashCode()
+        {
+            return 2049151605 + Type.GetHashCode();
         }
     }
 }

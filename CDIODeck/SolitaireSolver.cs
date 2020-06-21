@@ -5,6 +5,8 @@
  PURPOSE: This class is the solver of a solitaire game.
  SPECIAL NOTES:
  https://www.chessandpoker.com/solitaire_strategy.html
+ MODIFIED BY: Rasmus Søborg (S185119) AND Hans Krogh Thomsen (S185110)
+ MODIFY DATE: 21/06/2020
 ===============================
 */
 
@@ -14,9 +16,9 @@ using System.Linq;
 
 namespace Deck
 {
-    class SolitaireSolver
+    public class SolitaireSolver
     {
-        CardLogik cardLogik;
+        CardLogic cardLogic;
 
         List<CardModel>[] moves { get; set; }
         List<int> score { get; set; }
@@ -25,7 +27,7 @@ namespace Deck
 
         void SolitaireSolverSetup()
         {
-            cardLogik = new CardLogik();
+            cardLogic = new CardLogic();
 
             moves = new List<CardModel>[2];
             score = new List<int>();
@@ -63,8 +65,8 @@ namespace Deck
 
             if (!moves.Any())
             {
-                temp.Add(new CardModel("New Deck Card"));
-                temp.Add(new CardModel("New Deck Card"));
+                temp.Add(new CardModel());
+                temp.Add(new CardModel());
             }
             else
             {
@@ -91,42 +93,42 @@ namespace Deck
         /// <param name="stacks">the board stack list</param>
         void MovingAcesAndDeuces(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
         {
-            CardModel ace = cardLogik.GetSpecificCardFromStack(stacks, new CardModel("_A"));
-            CardModel deuce = cardLogik.GetSpecificCardFromStack(stacks, new CardModel("_2"));
+            CardModel ace = cardLogic.GetSpecificCardFromStack(stacks, new CardModel("_A"));
+            CardModel deuce = cardLogic.GetSpecificCardFromStack(stacks, new CardModel("_2"));
 
             #region Aces
             // From the stack
             if (ace != null)
             {
                 moves[0].Add(ace);
-                string aceSuit = cardLogik.GetSuitFromCardModel(ace);
+                string aceSuit = cardLogic.GetSuitFromCardModel(ace);
                 moves[1].Add(aceSuit.Equals("h") ? new CardModel("1") : aceSuit.Equals("d") ? new CardModel("2") : aceSuit.Equals("c") ? new CardModel("3") : new CardModel("4"));
                 return;
             }
 
             // From the deck
-            if (cardLogik.GetValueFromCardModel(deck) == 1)
+            if (cardLogic.GetValueFromCardModel(deck) == 1)
             {
                 moves[0].Add(deck);
-                string deckSuit = cardLogik.GetSuitFromCardModel(deck);
+                string deckSuit = cardLogic.GetSuitFromCardModel(deck);
                 moves[1].Add(deckSuit.Equals("h") ? new CardModel("1") : deckSuit.Equals("d") ? new CardModel("2") : deckSuit.Equals("c") ? new CardModel("3") : new CardModel("4"));
             }
             #endregion
 
             #region Deuces
             // From the stack
-            if (deuce != null && cardLogik.IsAceStackEmpty(deuce, colorStacks))
+            if (deuce != null && cardLogic.IsAceStackEmpty(deuce, colorStacks))
             {
                 moves[0].Add(deuce);
-                string deuceSuit = cardLogik.GetSuitFromCardModel(deuce);
+                string deuceSuit = cardLogic.GetSuitFromCardModel(deuce);
                 moves[1].Add(deuceSuit.Equals("h") ? colorStacks[0].Last() : deuceSuit.Equals("d") ? colorStacks[1].Last() : deuceSuit.Equals("c") ? colorStacks[2].Last() : colorStacks[3].Last());
             }
 
             // From the deck
-            if (cardLogik.GetValueFromCardModel(deck) == 2 && cardLogik.IsAceStackEmpty(deuce, colorStacks))
+            if (cardLogic.GetValueFromCardModel(deck) == 2 && cardLogic.IsAceStackEmpty(deuce, colorStacks))
             {
                 moves[0].Add(deck);
-                string deckSuit = cardLogik.GetSuitFromCardModel(deck);
+                string deckSuit = cardLogic.GetSuitFromCardModel(deck);
                 moves[1].Add(deckSuit.Equals("h") ? colorStacks[0].Last() : deckSuit.Equals("d") ? colorStacks[1].Last() : deckSuit.Equals("c") ? colorStacks[2].Last() : colorStacks[3].Last());
             }
             #endregion
@@ -141,7 +143,7 @@ namespace Deck
                 {
                     if (stacks[i].Count != 0)
                     {
-                        if (cardLogik.CanColorStack(deck, stacks[i].Last()) && cardLogik.CanNumberStack(deck, stacks[i].Last()))
+                        if (cardLogic.CanColorStack(deck, stacks[i].Last()) && cardLogic.CanNumberStack(deck, stacks[i].Last()))
                         {
                             moves[0].Add(deck);
                             moves[1].Add(stacks[i].Last());
@@ -150,7 +152,7 @@ namespace Deck
                             deckCard.Add(stacks[i].Last());
                         }
                     }
-                    else if (cardLogik.GetValueFromCardModel(deck) == 13)
+                    else if (cardLogic.GetValueFromCardModel(deck) == 13)
                     {
                         moves[0].Add(deck);
                         moves[1].Add(new CardModel("Empty"));
@@ -180,7 +182,7 @@ namespace Deck
                     {
                         if (stacks[s].Count != 0)
                         {
-                            if (cardLogik.CanColorStack(stacks[i][n], stacks[s].Last()) && cardLogik.CanNumberStack(stacks[i][n], stacks[s].Last()))
+                            if (cardLogic.CanColorStack(stacks[i][n], stacks[s].Last()) && cardLogic.CanNumberStack(stacks[i][n], stacks[s].Last()))
                             {
                                 moves[0].Add(stacks[i][n]);
                                 moves[1].Add(stacks[s].Last());
@@ -189,7 +191,7 @@ namespace Deck
                                 deckCard.Add(new CardModel(""));
                             }
                         }
-                        else if (cardLogik.GetValueFromCardModel(stacks[i][n]) == 13 && n != 0)
+                        else if (cardLogic.GetValueFromCardModel(stacks[i][n]) == 13 && n != 0)
                         {
                             moves[0].Add(stacks[i][n]);
                             moves[1].Add(stacks[s].Last());
@@ -219,7 +221,7 @@ namespace Deck
                 bool kingOnTable = false;
                 bool kingInDeck = false;
 
-                if (cardLogik.GetValueFromCardModel(deck) == 13)
+                if (cardLogic.GetValueFromCardModel(deck) == 13)
                 {
                     kingInDeck = true;
                 }
@@ -238,14 +240,14 @@ namespace Deck
 
                     coveredCards += n;
 
-                    if (stack.Count > 1 && cardLogik.GetValueFromCardModel(stack[n]) == 13)
+                    if (stack.Count > 1 && cardLogic.GetValueFromCardModel(stack[n]) == 13)
                     {
                         kingOnTable = true;
                     }
 
                     if (stack.Count != 0 && kingInDeck)
                     {
-                        if (cardLogik.CanColorStack(stack[n], deck) && cardLogik.CanNumberStack(stack[n], deck)) kingInDeck = true;
+                        if (cardLogic.CanColorStack(stack[n], deck) && cardLogic.CanNumberStack(stack[n], deck)) kingInDeck = true;
                         else kingInDeck = false;
                     }
                 }
@@ -270,10 +272,10 @@ namespace Deck
             int n = 0;
             foreach(List<CardModel> stack in stacks)
             {
-                string stackCardSuit = cardLogik.GetSuitFromCardModel(stack.Last());
+                string stackCardSuit = cardLogic.GetSuitFromCardModel(stack.Last());
                 int stackCardIndex = stackCardSuit.Equals("h") ? 0 : stackCardSuit.Equals("d") ? 1 : stackCardSuit.Equals("c") ? 2 : 3;
 
-                if (colorStacks[stackCardIndex].Any() && cardLogik.CanNumberStack(colorStacks[stackCardIndex].Last(), stack.Last()))
+                if (colorStacks[stackCardIndex].Any() && cardLogic.CanNumberStack(colorStacks[stackCardIndex].Last(), stack.Last()))
                 {
                     moves[0].Add(stack.Last());
                     moves[1].Add(colorStacks[stackCardIndex].Last());
@@ -285,10 +287,10 @@ namespace Deck
             }
 
             // Deck to Color Stacks
-            string deckCardSuit = cardLogik.GetSuitFromCardModel(deck);
+            string deckCardSuit = cardLogic.GetSuitFromCardModel(deck);
             int deckCardIndex = deckCardSuit.Equals("h") ? 0 : deckCardSuit.Equals("d") ? 1 : deckCardSuit.Equals("c") ? 2 : 3;
 
-            if (colorStacks[deckCardIndex].Any() && cardLogik.CanNumberStack(colorStacks[deckCardIndex].Last(), deck))
+            if (colorStacks[deckCardIndex].Any() && cardLogic.CanNumberStack(colorStacks[deckCardIndex].Last(), deck))
             {
                 moves[0].Add(deck);
                 moves[1].Add(colorStacks[deckCardIndex].Last());
@@ -298,9 +300,9 @@ namespace Deck
         }
     }
 
-    class CardLogik
+    class CardLogic
     {
-        public CardLogik() { }
+        public CardLogic() { }
 
         /// <summary>
         /// Converts CardType from CardModel into a string Suit

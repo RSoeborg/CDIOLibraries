@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CDIOComputerVision">
+      <HintPath>..\CDIOComputerVision\bin\Debug\CDIOComputerVision.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -51,12 +54,6 @@
     <Compile Include="CvCardTransformer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SolitaireSolver.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\CDIOComputerVision\CDIOComputerVision.csproj">
-      <Project>{9d08f44c-f730-4d52-a1fe-b9c7669c4932}</Project>
-      <Name>CDIOComputerVision</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

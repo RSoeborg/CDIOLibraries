@@ -48,8 +48,15 @@ namespace Deck
 
             public int Compare(object x, object y)
             {
-                if (!(x is Point) || !(y is Point)) throw new ArgumentException("Point comparer can only be used to compare points");
-                return 0; 
+                if (!(x is CardModel) || !(y is CardModel)) throw new ArgumentException("Point comparer can only be used to compare points");
+
+                var model1 = x as CardModel;
+                var model2 = y as CardModel;
+
+                var d1 = DeterminePointDistance(comparePoint, model1.MinWorldPoint);
+                var d2 = DeterminePointDistance(comparePoint, model2.MinWorldPoint);
+
+                return d1.CompareTo(d2);
             }
 
             private float DeterminePointDistance(Point p1, Point p2)
@@ -62,6 +69,15 @@ namespace Deck
         }
 
         public CvCardTransformer() { }
+
+        private List<CardModel> _TransformedObservations;
+
+        public CardModel[] GetTransformedObservations()
+        {
+            if (_TransformedObservations != default)
+                return _TransformedObservations.ToArray();
+            return default;
+        }
 
         public BoardModel GetBoardState(CvModel[] allObservations)
         {
@@ -97,7 +113,10 @@ namespace Deck
                     }
                 }
 
+                if (twinPairs.Count <= 0) continue;
                 var lowestPair = twinPairs.OrderBy(c => c.Distance).First();
+
+                if (lowestPair.Observations[0] == default || lowestPair.Observations[1] == default) continue;
 
                 // Determine middle position of two closest points
                 var yPoints = new int[] { lowestPair.Observations[0].BoundingBox.Y + lowestPair.Observations[0].Look_Bounds.Y, lowestPair.Observations[1].BoundingBox.Y + lowestPair.Observations[1].Look_Bounds.Y }.OrderBy(y => y);
@@ -108,18 +127,53 @@ namespace Deck
                     minX = xPoints.First(),
                     maxX = xPoints.Last();
 
-                var cardMiddlePoint = new Point(minX - maxX, minY - maxY);
+                var minWorld = new Point(minX, minY);
+                var maxWorld = new Point(maxX, maxY);
 
                 // Add card to observation
-                cardObservations.Add(new CardModel( observation.Type ) {
-                    WorldLocation = cardMiddlePoint
+                cardObservations.Add(new CardModel( $"_{observation.Type}" ) {
+                    MinWorldPoint = minWorld,
+                    MaxWorldPoint = maxWorld
                 });
             }
 
             // Determine the top left card
             cardObservations.Sort((p1, p2) => new PointComparer(new Point(5, 5)).Compare(p1, p2));
-            var topLeft = cardObservations.First();
 
+            if (cardObservations.Count > 0)
+            {
+                var topLeft = cardObservations.First();
+                @out.DeckCard = topLeft;
+
+
+                // Make green zone for top + a margin
+                var topGreenZoneMaxY = @out.DeckCard.MaxWorldPoint.Y + 25;
+                var cardsInTopGreenZone = cardObservations.Where(c => c.MinWorldPoint.Y < topGreenZoneMaxY && c.Type != @out.DeckCard.Type);
+                cardsInTopGreenZone.ToList().Sort((p1, p2) => new PointComparer(@out.DeckCard.MinWorldPoint).Compare(p1, p2));
+
+                var cardInTopGreenZoneIndex = 0;
+                foreach (var cardInGreenZone in cardsInTopGreenZone) 
+                {
+                    @out.Top[cardInTopGreenZoneIndex++] = cardInGreenZone;
+                    if (cardInTopGreenZoneIndex > 3) break;
+                }
+
+                // Make green zone for bottom
+                var topGreenZoneMinY = topGreenZoneMaxY;
+                var cardsInBottomGreenZone = cardObservations.Where(c => c.MinWorldPoint.Y > topGreenZoneMinY);
+                cardsInBottomGreenZone.ToList().Sort((p1, p2) => new PointComparer(new Point(5, topGreenZoneMinY)).Compare(p1, p2));
+                cardInTopGreenZoneIndex = 0;
+
+                foreach (var cardInGreenZone in cardsInBottomGreenZone)
+                {
+                    @out.Bottom[cardInTopGreenZoneIndex++] = cardInGreenZone;
+                    if (cardInTopGreenZoneIndex > 6) break;
+                }
+
+
+            }
+
+            _TransformedObservations = cardObservations;
 
             return @out;
         }
