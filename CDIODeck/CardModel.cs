@@ -20,7 +20,7 @@ namespace Deck
     {
         public CardType Type { get; set; }
 
-        public Rectangle WorldLocation { get; set; }
+        public Point WorldLocation { get; set; }
 
         public CardModel() { }
 

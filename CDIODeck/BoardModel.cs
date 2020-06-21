@@ -20,6 +20,6 @@ namespace Deck
         public CardModel[] Top = new CardModel[4];
         public CardModel[] Bottom = new CardModel[7];
 
-        public CardModel TopCard;
+        public CardModel DeckCard;
     }
 }

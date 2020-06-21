@@ -29,7 +29,7 @@ namespace ComputerVision
         }
 
 
-        public CvModel[] DetectObjects(Bitmap Source)
+        public CvModel[] DetectObjects(Bitmap Source, Rectangle Look_Bounds)
         {
             // MemoryStream is created to convert bitmap into a byte array.
             // We then use yolo to perform image detection and convert that into Computer Vision Models.
@@ -47,6 +47,7 @@ namespace ComputerVision
                     @out[index++] = new CvModel { 
                         BoundingBox = new Rectangle(item.X, item.Y, item.Width, item.Height),
                         Confidence = (float)item.Confidence,
+                        Look_Bounds = Look_Bounds,
                         Type = item.Type
                     };
                 }

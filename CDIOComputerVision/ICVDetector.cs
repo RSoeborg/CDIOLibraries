@@ -13,6 +13,6 @@ namespace ComputerVision
 {
     interface ICvDetector
     {
-        CvModel[] DetectObjects(Bitmap Source);
+        CvModel[] DetectObjects(Bitmap Source, Rectangle LookBounds);
     }
 }

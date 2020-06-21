@@ -22,6 +22,8 @@ namespace ComputerVision
         
         public Rectangle BoundingBox { get; set; }
 
+        public Rectangle Look_Bounds { get; set; }
+
         public string Type { get; set; }
     }
 }
