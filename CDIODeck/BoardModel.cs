@@ -4,6 +4,8 @@
  CREATE DATE: 06/06/2020
  PURPOSE: This class is a model over the state of the current board.
  SPECIAL NOTES: 
+ MODIFIED BY: Nicklas Beyer Lydersen (S185105)
+ LAST MODIFIED DATE: 21/06/2020
 ===============================
 */
 
@@ -17,8 +19,8 @@ namespace Deck
 {
     public class BoardModel
     {
-        public CardModel[] Top = new CardModel[4];
-        public CardModel[] Bottom = new CardModel[7];
+        public List<CardModel>[] Top = new List<CardModel>[4];
+        public List<CardModel>[] Bottom = new List<CardModel>[7];
 
         public CardModel DeckCard;
 
