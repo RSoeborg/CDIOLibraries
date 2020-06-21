@@ -3,7 +3,9 @@
  AUTHOR: Rasmus Søborg (S185119)
  CREATE DATE: 06/06/2020
  PURPOSE: This mdoel represents a simple playing card in the solitaire game
- SPECIAL NOTES: 
+ SPECIAL NOTES:
+ MODIFIED BY: Nicklas Beyer Lydersen (S185105)
+ LAST MODIFIED DATE: 19/06/2020
 ===============================
 */
 
@@ -20,7 +22,9 @@ namespace Deck
     {
         public CardType Type { get; set; }
 
-        public Point WorldLocation { get; set; }
+        public Rectangle WorldLocation { get; set; }
+        
+        public bool Uncovered { get; set; }
 
         public CardModel() { }
 
