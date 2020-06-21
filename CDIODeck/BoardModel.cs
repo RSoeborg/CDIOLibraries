@@ -33,20 +33,6 @@ namespace Deck
             return Count;
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj.GetHashCode() == GetHashCode();
-        }
-
-        public override int GetHashCode()
-        {
-            int hashCode = -779638276;
-            hashCode = hashCode * -1521134295 + EqualityComparer<CardModel[]>.Default.GetHashCode(Top);
-            hashCode = hashCode * -1521134295 + EqualityComparer<CardModel[]>.Default.GetHashCode(Bottom);
-            hashCode = hashCode * -1521134295 + EqualityComparer<CardModel>.Default.GetHashCode(DeckCard);
-            return hashCode;
-        }
-
         public override string ToString()
         {
             return base.ToString();

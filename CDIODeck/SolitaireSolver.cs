@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace Deck
 {
-    class SolitaireSolver
+    public class SolitaireSolver
     {
         CardLogik cardLogik;
 
