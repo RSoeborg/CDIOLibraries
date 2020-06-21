@@ -36,26 +36,24 @@ namespace Deck
         /// <summary>
         /// Returns the best Move the player can make
         /// </summary>
-        /// <param name="deck">The card from the deck</param>
-        /// <param name="colorStacks">the ace stack list</param>
-        /// <param name="stacks">The board stack list</param>
-        public List<CardModel> GetBestMove(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        /// <param name="boardModel">The board that contains the cards</param>
+        public List<CardModel> GetBestMove(BoardModel boardModel)
         {
             SolitaireSolverSetup();
 
-            MovingAcesAndDeuces(deck, colorStacks, stacks);
+            MovingAcesAndDeuces(boardModel);
 
             if (!moves.Any())
             {
-                FindAllMoves(deck, colorStacks, stacks);
+                FindAllMoves(boardModel);
 
                 foreach (CardModel move in moves[0]) score.Add(0);
 
                 DownCardScore();
 
-                KingMovement(deck, stacks);
+                KingMovement(boardModel);
 
-                BuildAceStack(deck, colorStacks, stacks);
+                BuildAceStack(boardModel);
             }
             else foreach (CardModel move in moves[0]) score.Add(0);
 
@@ -86,13 +84,11 @@ namespace Deck
         /// 
         /// Always play an Ace or Deuce wherever you can immediately.
         /// </summary>
-        /// <param name="deck">The card from the deck</param>
-        /// <param name="colorStacks">The ace stack list</param>
-        /// <param name="stacks">the board stack list</param>
-        void MovingAcesAndDeuces(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        /// <param name="boardModel">The board that contains the cards</param>
+        void MovingAcesAndDeuces(BoardModel boardModel)
         {
-            CardModel ace = cardLogik.GetSpecificCardFromStack(stacks, new CardModel("_A"));
-            CardModel deuce = cardLogik.GetSpecificCardFromStack(stacks, new CardModel("_2"));
+            CardModel ace = cardLogik.GetSpecificCardFromStack(boardModel.Bottom, new CardModel("_A"));
+            CardModel deuce = cardLogik.GetSpecificCardFromStack(boardModel.Bottom, new CardModel("_2"));
 
             #region Aces
             // From the stack
@@ -105,54 +101,58 @@ namespace Deck
             }
 
             // From the deck
-            if (cardLogik.GetValueFromCardModel(deck) == 1)
+            if (cardLogik.GetValueFromCardModel(boardModel.TopCard) == 1)
             {
-                moves[0].Add(deck);
-                string deckSuit = cardLogik.GetSuitFromCardModel(deck);
+                moves[0].Add(boardModel.TopCard);
+                string deckSuit = cardLogik.GetSuitFromCardModel(boardModel.TopCard);
                 moves[1].Add(deckSuit.Equals("h") ? new CardModel("1") : deckSuit.Equals("d") ? new CardModel("2") : deckSuit.Equals("c") ? new CardModel("3") : new CardModel("4"));
             }
             #endregion
 
             #region Deuces
             // From the stack
-            if (deuce != null && cardLogik.IsAceStackEmpty(deuce, colorStacks))
+            if (deuce != null && cardLogik.IsAceStackEmpty(deuce, boardModel.Top))
             {
                 moves[0].Add(deuce);
                 string deuceSuit = cardLogik.GetSuitFromCardModel(deuce);
-                moves[1].Add(deuceSuit.Equals("h") ? colorStacks[0].Last() : deuceSuit.Equals("d") ? colorStacks[1].Last() : deuceSuit.Equals("c") ? colorStacks[2].Last() : colorStacks[3].Last());
+                moves[1].Add(deuceSuit.Equals("h") ? boardModel.Top[0].Last() : deuceSuit.Equals("d") ? boardModel.Top[1].Last() : deuceSuit.Equals("c") ? boardModel.Top[2].Last() : boardModel.Top[3].Last());
             }
 
             // From the deck
-            if (cardLogik.GetValueFromCardModel(deck) == 2 && cardLogik.IsAceStackEmpty(deuce, colorStacks))
+            if (cardLogik.GetValueFromCardModel(boardModel.TopCard) == 2 && cardLogik.IsAceStackEmpty(deuce, boardModel.Top))
             {
-                moves[0].Add(deck);
-                string deckSuit = cardLogik.GetSuitFromCardModel(deck);
-                moves[1].Add(deckSuit.Equals("h") ? colorStacks[0].Last() : deckSuit.Equals("d") ? colorStacks[1].Last() : deckSuit.Equals("c") ? colorStacks[2].Last() : colorStacks[3].Last());
+                moves[0].Add(boardModel.TopCard);
+                string deckSuit = cardLogik.GetSuitFromCardModel(boardModel.TopCard);
+                moves[1].Add(deckSuit.Equals("h") ? boardModel.Top[0].Last() : deckSuit.Equals("d") ? boardModel.Top[1].Last() : deckSuit.Equals("c") ? boardModel.Top[2].Last() : boardModel.Top[3].Last());
             }
             #endregion
         }
 
-        void FindAllMoves(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        /// <summary>
+        /// Find all possible moves from the boardModel values.
+        /// </summary>
+        /// <param name="boardModel">The board that contains the cards</param>
+        void FindAllMoves(BoardModel boardModel)
         {
             // Deck to Stack
-            if (deck != null)
+            if (boardModel.TopCard != null)
             {
-                for (int i = stacks.Length - 1; i >= 0; i--)
+                for (int i = boardModel.Bottom.Length - 1; i >= 0; i--)
                 {
-                    if (stacks[i].Count != 0)
+                    if (boardModel.Bottom[i].Count != 0)
                     {
-                        if (cardLogik.CanColorStack(deck, stacks[i].Last()) && cardLogik.CanNumberStack(deck, stacks[i].Last()))
+                        if (cardLogik.CanColorStack(boardModel.TopCard, boardModel.Bottom[i].Last()) && cardLogik.CanNumberStack(boardModel.TopCard, boardModel.Bottom[i].Last()))
                         {
-                            moves[0].Add(deck);
-                            moves[1].Add(stacks[i].Last());
+                            moves[0].Add(boardModel.TopCard);
+                            moves[1].Add(boardModel.Bottom[i].Last());
 
                             downCard.Add(0);
-                            deckCard.Add(stacks[i].Last());
+                            deckCard.Add(boardModel.Bottom[i].Last());
                         }
                     }
-                    else if (cardLogik.GetValueFromCardModel(deck) == 13)
+                    else if (cardLogik.GetValueFromCardModel(boardModel.TopCard) == 13)
                     {
-                        moves[0].Add(deck);
+                        moves[0].Add(boardModel.TopCard);
                         moves[1].Add(new CardModel("Empty"));
 
                         downCard.Add(0);
@@ -162,37 +162,37 @@ namespace Deck
             }
 
             // Stack to stack
-            for (int i = stacks.Length - 1; i >= 0; i--)
+            for (int i = boardModel.Bottom.Length - 1; i >= 0; i--)
             {
-                if (stacks[i].Count != 0)
+                if (boardModel.Bottom[i].Count != 0)
                 {
-                    int n = stacks[i].Count - 1;
+                    int n = boardModel.Bottom[i].Count - 1;
                     if (n > 0)
                     {
-                        while (stacks[i][n - 1].Uncovered)
+                        while (boardModel.Bottom[i][n - 1].Uncovered)
                         {
                             n--;
                             if (n == 0) break;
                         }
                     }
 
-                    for (int s = stacks.Length - 1; i >= 0; i--)
+                    for (int s = boardModel.Bottom.Length - 1; i >= 0; i--)
                     {
-                        if (stacks[s].Count != 0)
+                        if (boardModel.Bottom[s].Count != 0)
                         {
-                            if (cardLogik.CanColorStack(stacks[i][n], stacks[s].Last()) && cardLogik.CanNumberStack(stacks[i][n], stacks[s].Last()))
+                            if (cardLogik.CanColorStack(boardModel.Bottom[i][n], boardModel.Bottom[s].Last()) && cardLogik.CanNumberStack(boardModel.Bottom[i][n], boardModel.Bottom[s].Last()))
                             {
-                                moves[0].Add(stacks[i][n]);
-                                moves[1].Add(stacks[s].Last());
+                                moves[0].Add(boardModel.Bottom[i][n]);
+                                moves[1].Add(boardModel.Bottom[s].Last());
 
                                 downCard.Add(n);
                                 deckCard.Add(new CardModel(""));
                             }
                         }
-                        else if (cardLogik.GetValueFromCardModel(stacks[i][n]) == 13 && n != 0)
+                        else if (cardLogik.GetValueFromCardModel(boardModel.Bottom[i][n]) == 13 && n != 0)
                         {
-                            moves[0].Add(stacks[i][n]);
-                            moves[1].Add(stacks[s].Last());
+                            moves[0].Add(boardModel.Bottom[i][n]);
+                            moves[1].Add(boardModel.Bottom[s].Last());
 
                             downCard.Add(n);
                             deckCard.Add(new CardModel(""));
@@ -202,6 +202,12 @@ namespace Deck
             }
         }
 
+        /// <summary>
+        /// Strategy rule 2 & 3:
+        /// 
+        /// Always make the play or transfer that frees a downcard, regardless of any other considerations.
+        /// When faced with a choice, always make the play or transfer that frees the downcard from the biggest pile of downcards
+        /// </summary>
         void DownCardScore()
         {
             for (int i = 0; i < downCard.Count; i++)
@@ -210,7 +216,14 @@ namespace Deck
             }
         }
 
-        void KingMovement(CardModel deck, List<CardModel>[] stacks)
+        /// <summary>
+        /// Strategy rule 5 & 6:
+        /// 
+        /// Don't clear a spot unless there's a King IMMEDIATELY waiting to occupy it.
+        /// Only play a King that will benefit the column(s) with the biggest pile of downcards, unless the play of another King will at least allow a transfer that frees a downcard.
+        /// </summary>
+        /// <param name="boardModel">The board that contains the cards</param>
+        void KingMovement(BoardModel boardModel)
         {
             if (moves[0].Count == 1 && !deckCard.Any() && downCard[0] == 0)
             {
@@ -219,12 +232,12 @@ namespace Deck
                 bool kingOnTable = false;
                 bool kingInDeck = false;
 
-                if (cardLogik.GetValueFromCardModel(deck) == 13)
+                if (cardLogik.GetValueFromCardModel(boardModel.TopCard) == 13)
                 {
                     kingInDeck = true;
                 }
 
-                foreach(List<CardModel> stack in stacks)
+                foreach(List<CardModel> stack in boardModel.Bottom)
                 {
                     int n = stack.Count - 1;
                     if (n > 0)
@@ -245,7 +258,7 @@ namespace Deck
 
                     if (stack.Count != 0 && kingInDeck)
                     {
-                        if (cardLogik.CanColorStack(stack[n], deck) && cardLogik.CanNumberStack(stack[n], deck)) kingInDeck = true;
+                        if (cardLogik.CanColorStack(stack[n], boardModel.TopCard) && cardLogik.CanNumberStack(stack[n], boardModel.TopCard)) kingInDeck = true;
                         else kingInDeck = false;
                     }
                 }
@@ -262,21 +275,31 @@ namespace Deck
             }
         }
 
-        void BuildAceStack(CardModel deck, List<CardModel>[] colorStacks, List<CardModel>[] stacks)
+        /// <summary>
+        /// Strategy rule 7:
+        /// 
+        /// Only build your Ace stacks (with anything other than an Ace or Deuce) when the play will:
+        /// * Not interfere with your Next Card Protection
+        /// * Allow a play or transfer that frees (or allows a play that frees) a downcard
+        /// * Open up a space for a same-color card pile transfer that allows a downcard to be freed
+        /// * Clear a spot for an IMMEDIATE waiting King (it cannot be to simply clear a spot)
+        /// </summary>
+        /// <param name="boardModel">The board that contains the cards</param>
+        void BuildAceStack(BoardModel boardModel)
         {
             if (moves.Any()) return;
 
             // stacks to Color Stacks
             int n = 0;
-            foreach(List<CardModel> stack in stacks)
+            foreach(List<CardModel> stack in boardModel.Bottom)
             {
                 string stackCardSuit = cardLogik.GetSuitFromCardModel(stack.Last());
                 int stackCardIndex = stackCardSuit.Equals("h") ? 0 : stackCardSuit.Equals("d") ? 1 : stackCardSuit.Equals("c") ? 2 : 3;
 
-                if (colorStacks[stackCardIndex].Any() && cardLogik.CanNumberStack(colorStacks[stackCardIndex].Last(), stack.Last()))
+                if (boardModel.Top[stackCardIndex].Any() && cardLogik.CanNumberStack(boardModel.Top[stackCardIndex].Last(), stack.Last()))
                 {
                     moves[0].Add(stack.Last());
-                    moves[1].Add(colorStacks[stackCardIndex].Last());
+                    moves[1].Add(boardModel.Top[stackCardIndex].Last());
 
                     score.Add(1);
                 }
@@ -285,13 +308,13 @@ namespace Deck
             }
 
             // Deck to Color Stacks
-            string deckCardSuit = cardLogik.GetSuitFromCardModel(deck);
+            string deckCardSuit = cardLogik.GetSuitFromCardModel(boardModel.TopCard);
             int deckCardIndex = deckCardSuit.Equals("h") ? 0 : deckCardSuit.Equals("d") ? 1 : deckCardSuit.Equals("c") ? 2 : 3;
 
-            if (colorStacks[deckCardIndex].Any() && cardLogik.CanNumberStack(colorStacks[deckCardIndex].Last(), deck))
+            if (boardModel.Top[deckCardIndex].Any() && cardLogik.CanNumberStack(boardModel.Top[deckCardIndex].Last(), boardModel.TopCard))
             {
-                moves[0].Add(deck);
-                moves[1].Add(colorStacks[deckCardIndex].Last());
+                moves[0].Add(boardModel.TopCard);
+                moves[1].Add(boardModel.Top[deckCardIndex].Last());
 
                 score.Add(1);
             }
@@ -382,6 +405,11 @@ namespace Deck
         public bool CanNumberStack(CardModel cardTop, CardModel cardBottom) =>
             GetValueFromCardModel(cardTop) == GetValueFromCardModel(cardBottom) - 1;
 
+        /// <summary>
+        /// Get a specific card from the stack, which is used in the ace and deuce rule
+        /// </summary>
+        /// <param name="stacks">The board stack list</param>
+        /// <param name="cardValue">The value you wanna find</param>
         public CardModel GetSpecificCardFromStack(List<CardModel>[] stacks, CardModel cardValue)
         {
             for (int i = 0; i < stacks.Length; i++)
@@ -392,9 +420,15 @@ namespace Deck
                 }
             }
 
+
             return null;
         }
 
+        /// <summary>
+        /// Making sure that an ace stack is not empty before placing a deuce in it.
+        /// </summary>
+        /// <param name="card">The specified card to chech suit ace stack</param>
+        /// <param name="colorStacks">The ace stack list</param>
         public bool IsAceStackEmpty(CardModel card, List<CardModel>[] colorStacks)
         {
             switch (GetSuitFromCardModel(card))
