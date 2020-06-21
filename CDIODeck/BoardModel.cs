@@ -19,8 +19,8 @@ namespace Deck
 {
     public class BoardModel
     {
-        public List<CardModel>[] Top = new List<CardModel>[4];
-        public List<CardModel>[] Bottom = new List<CardModel>[7];
+        public CardModel[] Top = new CardModel[4];
+        public CardModel[] Bottom = new CardModel[7];
 
         public CardModel TopCard;
     }
