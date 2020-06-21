@@ -33,6 +33,37 @@ namespace Deck
             return Count;
         }
 
+        public override bool Equals(object obj)
+        {
+            return obj is BoardModel model &&
+                   model.GetHashCode() == GetHashCode();
+        }
+
+        public override int GetHashCode()
+        {
+            int hc = Top.Length + Bottom.Length + 1;
+            for (int i = 0; i < Top.Length; ++i)
+            {
+                if (Top[i] == default)
+                    hc = unchecked(hc * 314159);
+                else
+                    hc = unchecked(hc * 314159 + (int)Top[i].Type);
+            }
+            for (int i = 0; i < Bottom.Length; ++i)
+            {
+                if (Bottom[i] == default)
+                    hc = unchecked(hc * 314159);
+                else
+                    hc = unchecked(hc * 314159 + (int)Bottom[i].Type);
+            }
+
+            if (DeckCard == default)
+                hc = unchecked(hc * 314159);
+            else
+                hc = unchecked(hc * 314159 + (int)DeckCard.Type);
+            return hc;
+        }
+
         public override string ToString()
         {
             return base.ToString();

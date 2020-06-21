@@ -14,6 +14,7 @@ using System.Linq;
 
 namespace Deck
 {
+    /*
     public class SolitaireSolver
     {
         CardLogik cardLogik;
@@ -449,4 +450,5 @@ namespace Deck
             return false;
         }
     }
+    */
 }

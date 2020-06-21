@@ -25,7 +25,7 @@ namespace Deck
         public Point MinWorldPoint { get; set; }
         public Point MaxWorldPoint { get; set; }
 
-        public bool Uncovered { get; set; }
+        public bool Uncovered { get; set; } = true;
 
         public CardModel() { }
 

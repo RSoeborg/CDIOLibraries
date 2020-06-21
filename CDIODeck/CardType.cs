@@ -70,6 +70,6 @@ namespace Deck
         _4s,
         _3s,
         _2s,
-
+        Covered
     }
 }

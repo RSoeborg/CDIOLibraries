@@ -54,6 +54,7 @@
     <Compile Include="CvCardTransformer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SolitaireSolver.cs" />
+    <Compile Include="StateController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

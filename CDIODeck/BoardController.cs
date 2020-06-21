@@ -24,7 +24,7 @@ namespace Deck
         private BoardModel Board = new BoardModel();
         private CvCardTransformer Transformer;
 
-        private const int ConsistencyBuffer = 50;
+        private const int ConsistencyBuffer = 15;
         private const int ConsistencyUpdatesPerCheck = 15;
         private const int MinConsistencyRequired = 1;
         private bool BufferFull = false;
