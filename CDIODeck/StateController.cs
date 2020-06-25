@@ -9,14 +9,24 @@ namespace Deck
 {
     public class StateController
     {
-        private List<CardModel>[] Top = new List<CardModel>[4];
-        private List<CardModel>[] Bottom = new List<CardModel>[7];
+        public List<CardModel>[] Top = new List<CardModel>[4];
+        public List<CardModel>[] Bottom = new List<CardModel>[7];
 
-        private CardModel DeckCard;
-        private BoardModel LastState;
+        public bool Initialized { get; set; } = false;
+
+        public CardModel DeckCard;
+
+        public delegate void DeckChanged(CardModel DeckCard, List<CardModel>[] ColorDeck, List<CardModel>[] Deck, BoardModel LastBoard);
+        public event DeckChanged OnDeckChanged;
+
+        public delegate void ControllerInitialized(BoardModel Board);
+        public event ControllerInitialized OnInitialized;
 
         public StateController()
         {
+            for (int i = 0; i < Top.Length; i++) Top[i] = new List<CardModel>();
+            for (int i = 0; i < Bottom.Length; i++) Bottom[i] = new List<CardModel>();
+
             var CoveredCard = new CardModel();
             CoveredCard.Type = CardType.Covered;
             CoveredCard.Uncovered = false;
@@ -39,31 +49,30 @@ namespace Deck
                 Bottom[6].Add(CoveredCard);
         }
 
+        public void InitializeBoard(BoardModel StartBoard)
+        {
+            for (int i = 0; i < StartBoard.Bottom.Length; i++)
+                if (StartBoard.Bottom[i] != default)
+                    Bottom[i].Add(StartBoard.Bottom[i]);
+
+            for (int i = 0; i < StartBoard.Top.Length; i++)
+                if (StartBoard.Top[i] != default)
+                    Top[i].Add(StartBoard.Bottom[i]);
+
+            DeckCard = StartBoard.DeckCard;
+            OnInitialized?.Invoke( StartBoard );
+        }
+
         public void UpdateBoardState(BoardModel CurrentState)
         {
-            if (LastState == default)
-            {
-                for (int i = 0; i < CurrentState.Bottom.Length; i++)
-                    if (CurrentState.Bottom[i] != default)
-                        Bottom[i].Add(CurrentState.Bottom[i]);
-
-                for (int i = 0; i < CurrentState.Top.Length; i++)
-                    if (CurrentState.Top[i] != default)
-                        Top[i].Add(CurrentState.Bottom[i]);
-            }
-
-            if (LastState != default && !LastState.Equals(CurrentState))
-            {
-                // TODO: Implement logic overlapping of cards
-            }
-
-
-            LastState = CurrentState;
+            OnDeckChanged?.Invoke(GetDeckCard(), GetTopDeck(), GetBottomDeck(), CurrentState);
         }
 
         public List<CardModel>[] GetTopDeck() => Top;
         public List<CardModel>[] GetBottomDeck() => Bottom;
 
         public CardModel GetDeckCard() => DeckCard;
+
+
     }
 }

@@ -32,6 +32,9 @@ namespace Deck
         private int CurrentDeterminedBoardModelIndex = 0;
         private BoardModel[] LastDeterminedBoardModels = new BoardModel[ConsistencyBuffer]; // We save the last 10 determined board models to ensure that the data is consistent.
 
+        public delegate void BoardUpdate(BoardModel NewBoard);
+        public event BoardUpdate OnBoardUpdate;
+
         public BoardModel GetBoard() 
         {
             lock (mutex)
@@ -50,9 +53,7 @@ namespace Deck
         public void UpdateBoardWithObservations(CvModel[] Observations)
         {
             lock (mutex)
-            {
-                Console.WriteLine($"Level: {CurrentDeterminedBoardModelIndex}");
-                
+            {                
                 Transformer.GetBoardState(Observations);
                 LastDeterminedBoardModels[CurrentDeterminedBoardModelIndex++] = Transformer.GetBoardState(Observations); 
                 if (CurrentDeterminedBoardModelIndex > ConsistencyBuffer - 1) 
@@ -81,6 +82,7 @@ namespace Deck
                                 MostOccuredModel = pair;
 
                     Board = MostOccuredModel.Key;
+                    OnBoardUpdate?.Invoke(Board);
                 }
 
             }

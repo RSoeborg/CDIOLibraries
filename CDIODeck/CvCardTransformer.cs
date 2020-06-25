@@ -122,18 +122,21 @@ namespace Deck
                 var yPoints = new int[] { lowestPair.Observations[0].BoundingBox.Y + lowestPair.Observations[0].Look_Bounds.Y, lowestPair.Observations[1].BoundingBox.Y + lowestPair.Observations[1].Look_Bounds.Y }.OrderBy(y => y);
                 var xPoints = new int[] { lowestPair.Observations[0].BoundingBox.X + lowestPair.Observations[0].Look_Bounds.X, lowestPair.Observations[1].BoundingBox.X + lowestPair.Observations[1].Look_Bounds.X }.OrderBy(x => x);
 
+                
+
                 int minY = yPoints.First(),
                     maxY = yPoints.Last(),
                     minX = xPoints.First(),
                     maxX = xPoints.Last();
 
                 var minWorld = new Point(minX, minY);
-                var maxWorld = new Point(maxX, maxY);
+                var maxWorld = new Point(maxX + lowestPair.Observations[0].BoundingBox.Width, maxY + lowestPair.Observations[0].BoundingBox.Height);
 
                 // Add card to observation
                 cardObservations.Add(new CardModel( $"_{observation.Type}" ) {
                     MinWorldPoint = minWorld,
-                    MaxWorldPoint = maxWorld
+                    MaxWorldPoint = maxWorld,
+                    Confidence = observation.Confidence
                 });
             }
 
